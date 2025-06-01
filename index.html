@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pay with Razorpay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </head>
+  <body>
+    <script>
+      // Get order_id and other details from query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const order_id = urlParams.get('order_id');
+      const amount = urlParams.get('amount') || '50000'; // in paise
+      const name = urlParams.get('name') || 'Your Company';
+      const email = urlParams.get('email') || '';
+      const contact = urlParams.get('contact') || '';
+
+      var options = {
+        "key": "YOUR_RAZORPAY_KEY_ID", // Replace with your Razorpay Key ID
+        "amount": amount,
+        "currency": "INR",
+        "name": name,
+        "order_id": order_id,
+        "prefill": {
+          "email": email,
+          "contact": contact
+        },
+        "handler": function (response){
+          // Send result back to React Native WebView
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              status: "success",
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature
+            }));
+          } else {
+            window.location.href = "https://your-app.com/payment-success";
+          }
+        },
+        "modal": {
+          "ondismiss": function(){
+            if (window.ReactNativeWebView) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                status: "cancelled"
+              }));
+            } else {
+              window.location.href = "https://your-app.com/payment-cancelled";
+            }
+          }
+        },
+        "theme": {
+          "color": "#3399cc"
+        }
+      };
+      var rzp1 = new Razorpay(options);
+      rzp1.open();
+    </script>
+  </body>
+</html>
